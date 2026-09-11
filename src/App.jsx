@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
+import Search from './pages/Search';
 import Category from './pages/Category';
 import Drops from './pages/Drops';
 import Product from './pages/Product';
@@ -19,6 +20,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route path="/shop" element={<Shop />} />
+        <Route path="/search" element={<Search />} />
         <Route path="/category/:cat" element={<Category />} />
         <Route path="/drops" element={<Drops />} />
         <Route path="/product" element={<Product />} />

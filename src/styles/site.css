@@ -646,3 +646,7 @@ img{display:block;max-width:100%}
 @media (hover:none){
   .cat-card .cat-meta .go{background:#fff;color:var(--ink-900)}
 }
+
+/* "View all" row at the foot of the search overlay */
+.search-all{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--border-hairline);padding:16px 4px 4px}
+.search-all-note{color:var(--text-faint);font-size:.88rem;margin:0}

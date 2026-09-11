@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import { useCatalog } from '../context/useCatalog';
+import { searchProducts } from '../data/search';
 import { useCurrency } from '../context/CurrencyContext';
 
 export default function SearchOverlay({ open, onClose }) {
@@ -9,6 +10,7 @@ export default function SearchOverlay({ open, onClose }) {
   const { fmt } = useCurrency();
   const [q, setQ] = useState('');
   const inputRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (open) {
@@ -24,14 +26,18 @@ export default function SearchOverlay({ open, onClose }) {
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  const term = q.trim().toLowerCase();
-  const results = useMemo(() => {
-    if (!term) return [];
-    return products
-      .map((p, i) => ({ p, i }))
-      .filter(({ p }) => (p.brand + ' ' + p.name + ' ' + (p.category || '')).toLowerCase().includes(term))
-      .slice(0, 8);
-  }, [term, products]);
+  const term = q.trim();
+  const matches = useMemo(() => searchProducts(products, term), [term, products]);
+  const PREVIEW = 8;
+  const results = matches.slice(0, PREVIEW);
+
+  // Hand the full query to the results page, which shows every match.
+  function goToResults(e) {
+    if (e) e.preventDefault();
+    if (!term) return;
+    onClose();
+    navigate('/search?q=' + encodeURIComponent(term));
+  }
 
   if (!open) return null;
 
@@ -39,7 +45,7 @@ export default function SearchOverlay({ open, onClose }) {
     <div className="search-overlay" role="dialog" aria-modal="true" aria-label="Search">
       <div className="search-scrim" onClick={onClose}></div>
       <div className="search-panel">
-        <div className="search-bar">
+        <form className="search-bar" onSubmit={goToResults} role="search">
           <Search className="search-ic" size={22} />
           <input
             ref={inputRef}
@@ -49,12 +55,12 @@ export default function SearchOverlay({ open, onClose }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
-          <button className="search-close" aria-label="Close search" onClick={onClose}><X size={22} /></button>
-        </div>
+          <button className="search-close" type="button" aria-label="Close search" onClick={onClose}><X size={22} /></button>
+        </form>
         <div className="search-results">
           {!term && <p className="search-hint">Try “Chanel”, “Birkin”, “watch”…</p>}
           {term && results.length === 0 && <p className="search-empty">No pieces match “{q}”.</p>}
-          {results.map(({ p, i }) => (
+          {results.map(({ product: p, index: i }) => (
             <Link key={p.brand + p.name} className="search-result" to={`/product/${i}`} onClick={onClose}>
               <span className="sr-thumb">
                 {p.images && p.images[0] ? <img src={p.images[0]} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <span className="sr-ph" />}
@@ -66,6 +72,18 @@ export default function SearchOverlay({ open, onClose }) {
               <span className="sr-price">{fmt ? fmt(p.price) : '$' + p.price.toLocaleString()}</span>
             </Link>
           ))}
+          {term && matches.length > 0 && (
+            <div className="search-all">
+              <p className="search-all-note">
+                {matches.length > PREVIEW
+                  ? `Showing ${PREVIEW} of ${matches.length} pieces`
+                  : `${matches.length} ${matches.length === 1 ? 'piece' : 'pieces'}`}
+              </p>
+              <Link className="link-u" to={'/search?q=' + encodeURIComponent(term)} onClick={onClose} style={{ color: 'var(--ink-900)' }}>
+                View all results
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>
